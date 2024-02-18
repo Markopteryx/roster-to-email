@@ -1,0 +1,23 @@
+{
+  "name": "roster-to-email",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "python",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "charliermarsh.ruff",
+        "exodiusstudios.comment-anchors",
+        "GitHub.copilot",
+        "GitLab.gitlab-workflow",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "tamasfe.even-better-toml",
+        "vscode-icons-team.vscode-icons",
+        "yoavbls.pretty-ts-errors",
+        "HashiCorp.terraform"
+      ]
+    }
+  },
+  "postCreateCommand": ".devcontainer/postCreateCommand.sh"
+}

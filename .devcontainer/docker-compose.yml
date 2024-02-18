@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  python:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - ../..:/workspaces:cached
+      - C:\Users\Marko\.aws:/root/.aws
+    command: sleep infinity
+    env_file:
+      - ../.env
+    environment:
+      WATCHPACK_POLLING: "true"
