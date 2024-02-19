@@ -18,6 +18,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
+# We are just turning off Pandas being annoying, it should be lucky I'm
+# too lazy to replace it with Polars here
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
@@ -100,24 +102,20 @@ def get_html():
 
 
 def get_shifts_dataframe(html) -> pd.DataFrame:
-    soup = BeautifulSoup(html, "html.parser")  # type: ignore
+    soup = BeautifulSoup(html, "html.parser")
 
-    # Find all divs that represent individual shifts
     shift_divs = soup.find_all("div", style=lambda value: value and "background-color" in value)  # type: ignore
 
     dates = []
     times = []
 
     for div in shift_divs:
-        # Extracting the date
         date_span = div.find("span", class_="ib5")
         dates.append(date_span.text if date_span else "")
 
-        # Extracting the time (if available)
         time_span = div.find("span", class_="ib6")
         times.append(time_span.text if time_span else "")
 
-    # Assuming the rest of your DataFrame creation and manipulation logic remains the same...
     shifts = pd.DataFrame(data={"date": dates, "time": times})
     shifts = shifts.replace("\xa0", np.nan)
 
@@ -139,14 +137,12 @@ def get_shifts_dataframe(html) -> pd.DataFrame:
         try:
             start_time = pd.to_datetime(row["start"], format=time_format).time()
             end_time = pd.to_datetime(row["end"], format=time_format).time()
-        except ValueError:  # In case 'start' or 'end' time is not provided or cannot be parsed
+        except ValueError:
             return row["endTime"]
 
-        # Combine the 'date' from 'startTime' with 'start' and 'end' times
         start_datetime = pd.Timestamp.combine(row["startTime"].date(), start_time)
         end_datetime = pd.Timestamp.combine(row["endTime"].date(), end_time)
 
-        # If the 'end' time is before the 'start' time, adjust 'end_datetime' to the next day
         if end_datetime <= start_datetime:
             end_datetime += pd.Timedelta(days=1)
 
@@ -163,7 +159,6 @@ def get_shifts_dataframe(html) -> pd.DataFrame:
 
 
 def generate_calandar(shifts: pd.DataFrame):
-    # get the month as a string fro mthe dataframe
     shifts["date"] = pd.to_datetime(shifts["date"], format="%d/%m/%y")
     month = shifts["date"].iloc[0].strftime("%B")
 
@@ -229,23 +224,14 @@ def send_email(calendar_file_path: str):
         print(e.response["Error"]["Message"])
 
 
-# def main():
-#     html = get_html()
-#     shifts = [get_shifts_dataframe(content) for content in html]
-#     months = [generate_calandar(shift) for shift in shifts]
-#     for month in months:
-#         send_email(month)
+def handler(_event, _context):
+    try:
+        html = get_html()
+        shifts = [get_shifts_dataframe(content) for content in html]
+        months = [generate_calandar(shift) for shift in shifts]
+        for month in months:
+            send_email(month)
 
-
-# if __name__ == "__main__":
-#     main()
-
-
-def handler(event, context):
-    html = get_html()
-    shifts = [get_shifts_dataframe(content) for content in html]
-    months = [generate_calandar(shift) for shift in shifts]
-    for month in months:
-        send_email(month)
-
-    return {"statusCode": 200, "body": "Emails sent successfully"}
+        return {"statusCode": 200, "body": "Emails sent successfully"}
+    except Exception as e:
+        return {"statusCode": 500, "body": str(e)}
