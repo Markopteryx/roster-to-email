@@ -59,7 +59,6 @@ def get_html():
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "q22")))
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "q45")))
 
-        # Fill in the login credentials
         driver.find_element(By.ID, "q22").send_keys(ROSTER_USERNAME)
         driver.find_element(By.ID, "q45").send_keys(ROSTER_PASSWORD)
 
@@ -132,7 +131,6 @@ def get_shifts_dataframe(html) -> pd.DataFrame:
         if pd.isnull(row["startTime"]) or pd.isnull(row["endTime"]):
             return row["endTime"]
 
-        # Parse the 'start' and 'end' times
         time_format = "%H:%M"
         try:
             start_time = pd.to_datetime(row["start"], format=time_format).time()
