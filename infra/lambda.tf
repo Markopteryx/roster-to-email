@@ -48,7 +48,7 @@ resource "aws_lambda_function" "lambda_function" {
   image_uri    = "${aws_ecr_repository.lambda_repository.repository_url}@${data.aws_ecr_image.service_image.image_digest}"
 
   role        = aws_iam_role.lambda_execution_role.arn
-  memory_size = 1024
+  memory_size = 2048
   timeout     = 30
 
   environment {
