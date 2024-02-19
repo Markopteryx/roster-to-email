@@ -1,5 +1,6 @@
 import os
 import time
+import warnings
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -17,12 +18,16 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
+warnings.simplefilter(action="ignore", category=FutureWarning)
+
 
 def get_html():
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--window-size=1280x1696")
+    chrome_options.add_argument("--single-process")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-infobars")
     chrome_options.add_argument("--disable-extensions")
@@ -31,6 +36,7 @@ def get_html():
     chrome_options.add_argument("--disable-client-side-phishing-detection")
     chrome_options.add_argument("--allow-running-insecure-content")
     chrome_options.add_argument("--disable-web-security")
+    chrome_options.add_argument("--disable-dev-tools")
     chrome_options.binary_location = "/opt/chrome-linux/chrome"
 
     service = Service(executable_path="/opt/chromedriver")
@@ -52,8 +58,8 @@ def get_html():
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "q45")))
 
         # Fill in the login credentials
-        driver.find_element(By.ID, "q22").send_keys("carlinbr")
-        driver.find_element(By.ID, "q45").send_keys("Shinynicu2!!")
+        driver.find_element(By.ID, "q22").send_keys(ROSTER_USERNAME)
+        driver.find_element(By.ID, "q45").send_keys(ROSTER_PASSWORD)
 
         driver.execute_script("login();")
 
@@ -175,13 +181,14 @@ def generate_calandar(shifts: pd.DataFrame):
         event.add("dtend", row["endTime"])
         cal.add_component(event)
 
-    with open(f"""{month}.ics""", "wb") as c:
+    file_path = f"/tmp/{month}.ics"
+    with open(file_path, "wb") as c:
         c.write(cal.to_ical())
 
-    return month
+    return file_path
 
 
-def send_email(calendar: str):
+def send_email(calendar_file_path: str):
     TO_EMAIL = os.environ.get("TO_EMAIL")
     FROM_EMAIL = os.environ.get("FROM_EMAIL")
 
@@ -196,14 +203,16 @@ def send_email(calendar: str):
     msg["To"] = TO_EMAIL
 
     msg_body = MIMEMultipart("alternative")
-    textpart = MIMEText(f"Hello, this is your roster for {calendar}.", _charset="UTF-8")
+    month_name = calendar_file_path.split("/")[-1].replace(".ics", "")
+    textpart = MIMEText(f"Hello, this is your roster for {month_name}.", _charset="UTF-8")
 
     msg_body.attach(textpart)
     msg.attach(msg_body)
-    with open(f"{calendar}.ics", "rb") as f:
+    with open(calendar_file_path, "rb") as f:
         att = MIMEApplication(f.read())
 
-    att.add_header("Content-Disposition", "attachment", filename=f"{calendar}.ics")
+    file_name = calendar_file_path.split("/")[-1]
+    att.add_header("Content-Disposition", "attachment", filename=file_name)
 
     msg.attach(att)
 
@@ -220,13 +229,23 @@ def send_email(calendar: str):
         print(e.response["Error"]["Message"])
 
 
-def main():
+# def main():
+#     html = get_html()
+#     shifts = [get_shifts_dataframe(content) for content in html]
+#     months = [generate_calandar(shift) for shift in shifts]
+#     for month in months:
+#         send_email(month)
+
+
+# if __name__ == "__main__":
+#     main()
+
+
+def handler(event, context):
     html = get_html()
     shifts = [get_shifts_dataframe(content) for content in html]
     months = [generate_calandar(shift) for shift in shifts]
     for month in months:
         send_email(month)
 
-
-if __name__ == "__main__":
-    main()
+    return {"statusCode": 200, "body": "Emails sent successfully"}
