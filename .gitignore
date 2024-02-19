@@ -1,3 +1,4 @@
 .env
-calender/February.ics
-calender/January.ics
+*.ics
+infra/.terraform.lock.hcl
+infra/.terraform*
