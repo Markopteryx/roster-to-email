@@ -6,7 +6,7 @@ resource "aws_ecr_repository" "lambda_repository" {
   }
 }
 
-resource "aws_ecr_lifecycle_policy" "foopomarko_lambda_repository_policy" {
+resource "aws_ecr_lifecycle_policy" "marko_lambda_repository_policy" {
   repository = aws_ecr_repository.lambda_repository.name
 
   policy = <<EOF

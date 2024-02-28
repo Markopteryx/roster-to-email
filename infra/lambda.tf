@@ -36,6 +36,26 @@ resource "aws_iam_role_policy_attachment" "lambda_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_cloudwatch_event_rule" "monthly_trigger" {
+  name                = "monthly-lambda-trigger"
+  description         = "Trigger Lambda function once a month"
+  schedule_expression = "cron(0 0 1 * ? *)"
+}
+
+resource "aws_cloudwatch_event_target" "invoke_lambda_monthly" {
+  rule      = aws_cloudwatch_event_rule.monthly_trigger.name
+  arn       = aws_lambda_function.lambda_function.arn
+  target_id = "InvokeLambdaMonthly"
+}
+
+resource "aws_lambda_permission" "allow_cloudwatch_to_call_lambda" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_function.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.monthly_trigger.arn
+}
+
 data "aws_ecr_image" "service_image" {
   repository_name = aws_ecr_repository.lambda_repository.name
   image_tag       = "latest"
