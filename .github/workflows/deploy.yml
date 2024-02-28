@@ -36,22 +36,6 @@ jobs:
         run: |
           docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG || true
 
-      - name: Cache Python dependencies
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cache/pypoetry
-          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-poetry-
-
-      - name: Install dependencies
-        run: |
-          pip install poetry
-          poetry config virtualenvs.create false
-          poetry install --no-interaction
-        working-directory: ./calender
-
       - name: Build, tag, and push Docker image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}

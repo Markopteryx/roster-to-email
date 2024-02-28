@@ -62,7 +62,7 @@ data "aws_ecr_image" "service_image" {
 }
 
 resource "aws_lambda_function" "lambda_function" {
-  function_name = "Shifts"
+  function_name = "shifts"
 
   package_type = "Image"
   image_uri    = "${aws_ecr_repository.lambda_repository.repository_url}@${data.aws_ecr_image.service_image.image_digest}"
