@@ -14,7 +14,7 @@ ENV PATH="/opt/chromedriver:${PATH}"
 
 RUN pip install poetry
 
-COPY pyproject.toml poetry.lock ./
+COPY pyproject.toml poetry.loc[k] ./
 
 RUN poetry config virtualenvs.create false && poetry install --no-interaction
 
